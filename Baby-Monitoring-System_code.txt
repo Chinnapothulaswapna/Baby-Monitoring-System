@@ -1,0 +1,44 @@
+#include <BoltIoT-Arduino-Helper.h>
+
+// Replace 'YOUR_API_KEY' and 'YOUR_DEVICE_ID' with your Bolt Cloud API Key and Device ID
+char apiKey[] = "YOUR_API_KEY";
+char deviceID[] = "YOUR_DEVICE_ID";
+
+const int crySensorPin = A0;       // Analog pin to read cry detection sensor
+const int temperatureSensorPin = A1;  // Analog pin to read temperature sensor
+const int humiditySensorPin = A2;     // Analog pin to read humidity sensor
+
+int cryThreshold = 500;        // Adjust this threshold based on sensor calibration
+int temperatureThreshold = 25;  // Adjust based on preferred temperature level
+int humidityThreshold = 60;     // Adjust based on preferred humidity level
+
+void setup() {
+  boltiot.begin(Serial);
+}
+
+void loop() {
+  checkCryDetection();
+  monitorEnvironment();
+  delay(5000);  // Add a delay to avoid excessive notifications
+}
+
+void checkCryDetection() {
+  int crySensorValue = analogRead(crySensorPin);
+  if (crySensorValue > cryThreshold) {
+    boltiot.sendCommand("notify", "Baby is crying!");
+  }
+}
+
+void monitorEnvironment() {
+  int temperature = analogRead(temperatureSensorPin);
+  int humidity = analogRead(humiditySensorPin);
+
+  // Convert sensor values to actual temperature and humidity readings
+  temperature = map(temperature, 0, 1023, 0, 50);
+  humidity = map(humidity, 0, 1023, 0, 100);
+
+  // Check if environmental conditions are outside the preferred range
+  if (temperature > temperatureThreshold || humidity < humidityThreshold) {
+    boltiot.sendCommand("notify", "Check baby's environment!");
+  }
+}
